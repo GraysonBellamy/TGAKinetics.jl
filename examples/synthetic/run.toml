@@ -1,0 +1,123 @@
+# Example run file: fit a five-step sequential scheme to three heating rates.
+# The data in data/ were made from true_scheme.toml (see make_data.jl), so
+# the fit can be compared with known values.
+#
+#   julia -t auto ../../bin/tgafit.jl check run.toml
+#   julia -t auto ../../bin/tgafit.jl fit   run.toml
+#
+# Paths are relative to this file. Keys that are not tables (output_dir,
+# components) must come before the first [table].
+
+output_dir = "results"
+
+# Components in the order they appear in the scheme. Mass of each is per unit
+# reference mass (see [data] reference).
+components = ["wood", "int1", "int2", "int3", "int4", "char"]
+
+# Initial mass fractions (must add up to 1). A number is fixed, [lower, upper]
+# is fitted, and one entry may be "rest" (1 minus the others). Components not
+# listed start at 0. If [initial] is left out, the first component starts at 1.
+[initial]
+wood = 1.0
+
+# Reactions. Each has one reactant. `products` gives the solid yield of each
+# product (mass of product per mass of reactant consumed); whatever is left
+# goes to gas. Rate = 10^log10A * exp(-E / (R T)) * (reactant mass)^order,
+# with log10A in log10(1/s) and E in kJ/mol. Every value can be a number
+# (fixed) or [lower, upper] (fitted). order defaults to 1.
+[[reaction]]
+name = "R1"
+reactant = "wood"
+products = { int1 = [0.1, 0.95] }
+log10A = [0.0, 18.0]
+E = [40.0, 250.0]
+
+[[reaction]]
+name = "R2"
+reactant = "int1"
+products = { int2 = [0.1, 0.95] }
+log10A = [0.0, 18.0]
+E = [40.0, 250.0]
+
+[[reaction]]
+name = "R3"
+reactant = "int2"
+products = { int3 = [0.1, 0.95] }
+log10A = [0.0, 18.0]
+E = [40.0, 250.0]
+
+[[reaction]]
+name = "R4"
+reactant = "int3"
+products = { int4 = [0.1, 0.95] }
+log10A = [-2.0, 18.0]
+E = [40.0, 250.0]
+
+[[reaction]]
+name = "R5"
+reactant = "int4"
+products = { char = [0.1, 0.95] }
+log10A = [-2.0, 18.0]
+E = [40.0, 250.0]
+
+# How to read every data file. Any of these can also be set inside a single
+# [[dataset]] to override it for that file.
+[data]
+time_column = "Time (min)"
+temperature_column = "Temperature (C)"   # sample temperature
+mass_column = "Mass (mg)"                # any mass unit
+time_unit = "min"                        # "s" or "min"
+temperature_unit = "C"                   # "K" or "C"
+# Mass-loss rate: if mlr_column is empty it is the derivative of a P-spline
+# fitted to mass against time. If you give a column, it must be -dm/dt in the
+# file's mass and time units.
+mlr_column = ""
+smoothing_segments = 500
+smoothing_lambda = "auto"                # V-curve choice, or a number
+# Reference mass: "dry" = the point of lowest mass-loss rate inside
+# dry_window (K); the data before it are dropped and the model starts there
+# with the [initial] composition. "initial" = the first point.
+reference = "dry"
+dry_window = [373.0, 423.0]
+# Points compared in the objective: about one every grid_step K, inside
+# fit_range (K).
+grid_step = 1.0
+fit_range = [393.0, 1073.0]
+
+# One entry per data file. Weights are normalized to add up to 1.
+[[dataset]]
+name = "5Kmin"
+file = "data/tga_5Kmin.csv"
+weight = 0.25
+
+[[dataset]]
+name = "10Kmin"
+file = "data/tga_10Kmin.csv"
+weight = 0.5
+
+[[dataset]]
+name = "20Kmin"
+file = "data/tga_20Kmin.csv"
+weight = 0.25
+
+# CNE = mlr_weight * MAE(MLR) / max|MLR| + mass_weight * MAE(mass) / max(mass)
+[objective]
+mlr_weight = 0.6
+mass_weight = 0.4
+
+# Self-adaptive differential evolution. Runs are repeatable for a given seed.
+# Several independent runs guard against stopping in a local minimum; the
+# best is kept. These settings take a minute or two; see the README for what
+# a final fit should use.
+[optimizer]
+population = 50
+generations = 2000
+runs = 4
+seed = 1
+report_every = 500
+
+# ODE tolerances used during the fit. Final curves and the reported CNE are
+# recomputed with tight tolerances (1e-9 / 1e-7).
+[solver]
+abstol = 1e-6
+reltol = 1e-4

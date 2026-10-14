@@ -1,0 +1,65 @@
+# A second scheme on the same data: three independent pseudo-components,
+# each decomposing to char and gas. The initial fractions of two of them are
+# fitted; the third takes the rest.
+#
+#   julia -t auto ../../bin/tgafit.jl fit run_parallel.toml
+
+output_dir = "results_parallel"
+components = ["hemi", "cell", "lignin", "char"]
+
+[initial]
+hemi = [0.1, 0.5]
+cell = [0.2, 0.6]
+lignin = "rest"
+
+[[reaction]]
+name = "hemi"
+reactant = "hemi"
+products = { char = [0.0, 0.5] }
+log10A = [0.0, 18.0]
+E = [40.0, 250.0]
+
+[[reaction]]
+name = "cell"
+reactant = "cell"
+products = { char = [0.0, 0.5] }
+log10A = [0.0, 18.0]
+E = [40.0, 250.0]
+
+[[reaction]]
+name = "lignin"
+reactant = "lignin"
+products = { char = [0.0, 0.8] }
+log10A = [-2.0, 18.0]
+E = [20.0, 250.0]
+
+[data]
+time_column = "Time (min)"
+temperature_column = "Temperature (C)"
+mass_column = "Mass (mg)"
+time_unit = "min"
+temperature_unit = "C"
+reference = "dry"
+dry_window = [373.0, 423.0]
+fit_range = [393.0, 1073.0]
+
+[[dataset]]
+name = "5Kmin"
+file = "data/tga_5Kmin.csv"
+weight = 0.25
+
+[[dataset]]
+name = "10Kmin"
+file = "data/tga_10Kmin.csv"
+weight = 0.5
+
+[[dataset]]
+name = "20Kmin"
+file = "data/tga_20Kmin.csv"
+weight = 0.25
+
+[optimizer]
+population = 64
+generations = 2000
+runs = 4
+report_every = 250

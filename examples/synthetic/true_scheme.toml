@@ -1,0 +1,68 @@
+# The scheme used to make the synthetic data in data/: the published red oak
+# five-step sequential scheme (Bellamy et al. 2026, model SII) plus a moisture
+# component that evaporates below about 400 K.
+
+components = ["water", "wood", "int1", "int2", "int3", "int4", "char"]
+
+[initial]
+water = 0.06
+wood = "rest"
+
+[[reaction]]
+name = "dry"
+reactant = "water"
+log10A = 5.0
+E = 50.0
+
+[[reaction]]
+name = "R1"
+reactant = "wood"
+products = { int1 = 0.81 }
+log10A = 9.17318626841
+E = 119.2
+
+[[reaction]]
+name = "R2"
+reactant = "int1"
+products = { int2 = 0.82 }
+log10A = 12.296
+E = 160.6
+
+[[reaction]]
+name = "R3"
+reactant = "int2"
+products = { int3 = 0.39 }
+log10A = 13.6985
+E = 189.6
+
+[[reaction]]
+name = "R4"
+reactant = "int3"
+products = { int4 = 0.81 }
+log10A = 4.62
+E = 92.26
+
+[[reaction]]
+name = "R5"
+reactant = "int4"
+products = { char = 0.80 }
+log10A = 0.587
+E = 52.57
+
+[[dataset]]
+name = "5Kmin"
+heating_rate = 5.0
+T_start = 303.15
+T_end = 1073.15
+
+[[dataset]]
+name = "10Kmin"
+heating_rate = 10.0
+T_start = 303.15
+T_end = 1073.15
+
+[[dataset]]
+name = "20Kmin"
+heating_rate = 20.0
+T_start = 303.15
+T_end = 1073.15
